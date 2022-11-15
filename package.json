@@ -18,6 +18,8 @@
   },
   "homepage": "https://github.com/priesdelly/testing-cubank#readme",
   "devDependencies": {
+    "@types/jest": "^29.2.3",
+    "@types/mocha": "^10.0.0",
     "cypress": "^11.0.1"
   }
 }
