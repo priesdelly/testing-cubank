@@ -4,8 +4,6 @@ describe('empty spec', () => {
   })
 
   it('click', () => {
-    cy.get('button');
-    cy.click();
-  })
 
+  })
 })
