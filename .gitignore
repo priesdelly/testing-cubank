@@ -198,3 +198,4 @@ dist
 package-lock.json
 cypress/vidoes/*
 cypress/screenshots/*
+.idea
