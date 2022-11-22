@@ -1,5 +1,5 @@
-const BASE_URL = 'http://localhost:3000/';
-const BASE_API = 'http://localhost:4000/api/v1/'
+const BASE_URL = 'https://cu-bank-fe.vercel.app/';
+const BASE_API = 'https://cu-bank.herokuapp.com/api/v1/';
 
 describe('Test register scenario', () => {
   beforeEach(() => {
