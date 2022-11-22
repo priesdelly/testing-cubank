@@ -3,6 +3,8 @@
 		"resolveJsonModule": true,
 		"esModuleInterop": true,
 		"target": "es5",
+		"esModuleInterop": true,
+		"resolveJsonModule": true,
 		"lib": [
 			"es5",
 			"dom"
