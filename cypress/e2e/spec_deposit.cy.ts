@@ -29,10 +29,10 @@ describe('Deposit scenario', () => {
             cy.setCookie('old-balance', body.data.balance + '');
         });
 
-        cy.get(':nth-child(3) > :nth-child(2) > form > label > #among').type('100')
+        cy.get('input[cid="d1"]').type('100')
 
         cy.intercept('PUT', 'https://cu-bank.herokuapp.com/api/v1/transactions').as('putTransaction')
-        cy.get(':nth-child(3) > :nth-child(2) > form > button').click();
+        cy.get('button[cid="dc"]').click();
         cy.wait('@putTransaction').then((interception2) => {
             expect(interception2.response?.statusCode).eq(200);
             cy.wait('@getTransaction').then((interception3) => {
@@ -42,6 +42,9 @@ describe('Deposit scenario', () => {
                     let oldBalance = cookie.value;
                     expect(body.data.balance).eq(Number(oldBalance) + 100);
                 });
+                
+                cy.get('input[cid="w1"]').type('100');
+                cy.get('button[cid="wc"]').click();
             });
         });
     });
@@ -50,11 +53,9 @@ describe('Deposit scenario', () => {
 
         doLogin();
 
-        cy.get(':nth-child(3) > :nth-child(2) > form').within(() => {
-            cy.get('input[cid="d1"]').type(fixtures.num309)
-            cy.get('button[cid="dc"]').click();
-            cy.get('input[cid="d1"]').then($el => $el[0].checkValidity()).should('be.false')
-        });
+        cy.get('input[cid="d1"]').type(fixtures.num309)
+        cy.get('button[cid="dc"]').click();
+        cy.get('input[cid="d1"]').then($el => $el[0].checkValidity()).should('be.false')
     });
 
     it('TC3 - success input number 308 length', () => {
