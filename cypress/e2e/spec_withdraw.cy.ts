@@ -18,23 +18,29 @@ describe("withdrawal", () => {
     logIn();
     cy.wait("@loginSubmit").then((interception) => {
       expect(interception.response?.statusCode).eq(200);
-      let res = interception.response?.body.user;
-      let balance_update = res.balance;
-
-      //type withdraw amount
-      cy.wait(5000);
-      cy.get('[cid="w1"]').type(JSON.stringify(balance_update));
-      cy.get('[cid="wc"]').click();
-      cy.wait(5000);
+      cy.intercept('GET', 'https://cu-bank.herokuapp.com/api/v1/transactions').as('getTransaction')
+      cy.wait('@getTransaction').then((interception2) => {
+        expect(interception2.response?.statusCode).eq(200);
+        let res = interception2.response?.body;
+        let balanceUpdate = res.data.balance;
+        if(balanceUpdate > 0){
+          cy.get('[cid="w1"]').type(JSON.stringify(balanceUpdate));
+          cy.intercept('PUT', 'https://cu-bank.herokuapp.com/api/v1/transactions').as('putTransaction')
+          cy.get('[cid="wc"]').click();
+          cy.wait('@putTransaction').then((interception3) => {
+            expect(interception3.response?.statusCode).eq(200);
+          });
+        }
+        cy.get('[cid="d1"]').clear();
+        cy.get('[cid="w1"]').clear();
+        cy.get('[cid="d1"]').type("100");
+        cy.intercept('PUT', 'https://cu-bank.herokuapp.com/api/v1/transactions').as('putTransaction2')
+        cy.get('[cid="dc"]').click();
+        cy.wait('@putTransaction2').then((interception4) => {
+          expect(interception4.response?.statusCode).eq(200);
+        });
+      });
     });
-    cy.get('[cid="d1"]').clear();
-    cy.get('[cid="w1"]').clear();
-    cy.wait(5000);
-    cy.get('[cid="d1"]').type("100");
-    cy.get('[cid="dc"]').click();
-    cy.wait(5000);
-
-    cy.visit("https://cu-bank-fe.vercel.app/");
   });
 
   // TC1 Amount max+ expected your balance isn't not enough
@@ -58,8 +64,6 @@ describe("withdrawal", () => {
     cy.get('[cid="withdraw-error-mes"]')
       .contains("your balance isn't not enough")
       .should("exist");
-    //logout
-    cy.visit("https://cu-bank-fe.vercel.app/");
   });
 
   //------------
@@ -100,11 +104,11 @@ describe("withdrawal", () => {
     //deposit for next case
     cy.get('[cid="d1"]').clear();
     cy.get('[cid="d1"]').type("100");
+    cy.intercept('PUT', 'https://cu-bank.herokuapp.com/api/v1/transactions').as('putTransaction')
     cy.get('[cid="dc"]').click();
-    cy.wait(5000);
-
-    //log out
-    cy.visit("https://cu-bank-fe.vercel.app/");
+    cy.wait('@putTransaction').then((interception4) => {
+      expect(interception4.response?.statusCode).eq(200);
+    });
   });
   //-----------
 
@@ -145,11 +149,11 @@ describe("withdrawal", () => {
     //deposit for next case
     cy.get('[cid="d1"]').clear();
     cy.get('[cid="d1"]').type("99");
+    cy.intercept('PUT', 'https://cu-bank.herokuapp.com/api/v1/transactions').as('putTransaction')
     cy.get('[cid="dc"]').click();
-    cy.wait(5000);
-
-    //log out
-    cy.visit("https://cu-bank-fe.vercel.app/");
+    cy.wait('@putTransaction').then((interception4) => {
+      expect(interception4.response?.statusCode).eq(200);
+    });
   });
   //-----------
 
@@ -181,10 +185,6 @@ describe("withdrawal", () => {
       console.log(balance_update);
       expect(balance_update).eq(balance - 50);
     });
-
-    //logout
-    // cy.clearLocalStorage()
-    cy.visit("https://cu-bank-fe.vercel.app/");
   });
   //-----------
 
@@ -214,9 +214,6 @@ describe("withdrawal", () => {
       //console.log(balance_update)
       expect(balance_update).eq(balance - 2);
     });
-
-    //logout
-    cy.visit("https://cu-bank-fe.vercel.app/");
   });
   //-----------
 
@@ -248,9 +245,6 @@ describe("withdrawal", () => {
       console.log(balance_update);
       expect(balance_update).eq(balance - 1);
     });
-
-    //logout
-    cy.visit("https://cu-bank-fe.vercel.app/");
   });
   //------------
 
@@ -268,8 +262,6 @@ describe("withdrawal", () => {
     cy.get('[cid="withdraw-error-mes"]')
       .contains("Please put only number")
       .should("exist");
-    //logout
-    cy.visit("https://cu-bank-fe.vercel.app/");
   });
 
   //------------
@@ -297,9 +289,6 @@ describe("withdrawal", () => {
     cy.wait("@tc8Submit").then((interception) => {
       expect(interception.response.statusCode).eq(200);
     });
-
-    //logout
-    cy.visit("https://cu-bank-fe.vercel.app/");
   });
   //------------
 
@@ -322,9 +311,6 @@ describe("withdrawal", () => {
     cy.get('input[cid="w1"]')
       .then(($el) => $el[0].checkValidity())
       .should("be.false");
-
-    //logout
-    cy.visit("https://cu-bank-fe.vercel.app/");
   });
   //------------
 
@@ -347,9 +333,6 @@ describe("withdrawal", () => {
     cy.get('input[cid="w1"]')
       .then(($el) => $el[0].checkValidity())
       .should("be.false");
-
-    //logout
-    cy.visit("https://cu-bank-fe.vercel.app/");
   });
   //------------
 
@@ -378,8 +361,6 @@ describe("withdrawal", () => {
     cy.wait("@tc11Submit").then((interception) => {
       expect(interception.response.statusCode).eq(200);
     });
-    //logout
-    cy.visit("https://cu-bank-fe.vercel.app/");
   });
   //------------
 
@@ -401,8 +382,6 @@ describe("withdrawal", () => {
     cy.wait("@tc12Submit").then((interception) => {
       expect(interception.response.statusCode).eq(200);
     });
-    //logout
-    cy.visit("https://cu-bank-fe.vercel.app/");
   });
   //------------
 
@@ -427,8 +406,6 @@ describe("withdrawal", () => {
     cy.get('[cid="withdraw-error-mes"]')
       .contains("Please put only number")
       .should("exist");
-    //logout
-    cy.visit("https://cu-bank-fe.vercel.app/");
   });
 
   //------------
@@ -447,9 +424,6 @@ describe("withdrawal", () => {
     cy.get('input[cid="w1"]')
       .then(($el) => $el[0].checkValidity())
       .should("be.false");
-
-    //logout
-    cy.visit("https://cu-bank-fe.vercel.app/");
   });
   //------------
 
@@ -467,9 +441,6 @@ describe("withdrawal", () => {
     cy.get('input[cid="w1"]')
       .then(($el) => $el[0].checkValidity())
       .should("be.false");
-
-    //logout
-    cy.visit("https://cu-bank-fe.vercel.app/");
   });
   //------------
 
@@ -487,9 +458,6 @@ describe("withdrawal", () => {
   //   cy.get('input[cid="w1"]')
   //     .then(($el) => $el[0].checkValidity())
   //     .should("be.false");
-
-  //   //logout
-  //   cy.visit("https://cu-bank-fe.vercel.app/");
   // });
   //------------
 
@@ -507,9 +475,6 @@ describe("withdrawal", () => {
     cy.get('input[cid="w1"]')
       .then(($el) => $el[0].checkValidity())
       .should("be.false");
-
-    //logout
-    cy.visit("https://cu-bank-fe.vercel.app/");
   });
   //------------
 
@@ -538,9 +503,6 @@ describe("withdrawal", () => {
     cy.wait("@tc18Submit").then((interception) => {
       expect(interception.response.statusCode).eq(200);
     });
-
-    //logout
-    cy.visit("https://cu-bank-fe.vercel.app/");
   });
   //------------
 
@@ -569,9 +531,6 @@ describe("withdrawal", () => {
     cy.wait("@tc19Submit").then((interception) => {
       expect(interception.response.statusCode).eq(200);
     });
-
-    //logout
-    cy.visit("https://cu-bank-fe.vercel.app/");
   });
   //------------
 });
