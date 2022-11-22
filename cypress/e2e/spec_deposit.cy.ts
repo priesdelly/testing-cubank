@@ -129,7 +129,6 @@ describe('Deposit scenario', () => {
         doLogin();
 
         cy.get('input[cid="d1"]').type('0')
-            
         cy.get('button[cid="dc"]').click();
         cy.get('label[cid="deposite-error-mes"]').contains('Please put only number').should('exist')
     });
@@ -164,8 +163,8 @@ describe('Deposit scenario', () => {
         doLogin();
 
         cy.get('input[cid="d1"]').type('1.0000000597')
-            cy.get('button[cid="dc"]').click();
-            cy.get('input[cid="d1"]').then($el => $el[0].checkValidity()).should('be.false')
+        cy.get('button[cid="dc"]').click();
+        cy.get('input[cid="d1"]').then($el => $el[0].checkValidity()).should('be.false')
     });
 
     it('TC11 - success input number amount = 1.0000000596', () => {
