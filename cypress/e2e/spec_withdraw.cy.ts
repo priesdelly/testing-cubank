@@ -78,7 +78,6 @@ describe("withdrawal", () => {
       }
       console.log("current balance: " + balance);
       let max = balance;
-      console.log("maxN" + max);
 
       //type withdraw amount
       cy.get('[cid="w1"]').type(JSON.stringify(max));
@@ -197,11 +196,9 @@ describe("withdrawal", () => {
       expect(interception.response?.statusCode).eq(200);
       let res = interception.response?.body.user;
       let balance_update = res.balance;
-      //console.log(balance_update)
       if (balance_update) {
         balance = balance_update;
       }
-      //console.log("current balance: "+balance)
     });
 
     //withdraw submit
@@ -285,11 +282,9 @@ describe("withdrawal", () => {
       expect(interception.response?.statusCode).eq(200);
       let res = interception.response?.body.user;
       let balance_update = res.balance;
-      //console.log(balance_update)
       if (balance_update) {
         balance = balance_update;
       }
-      //console.log("current balance: "+balance)
     });
 
     //withdraw submit
@@ -316,11 +311,9 @@ describe("withdrawal", () => {
       expect(interception.response?.statusCode).eq(200);
       let res = interception.response?.body.user;
       let balance_update = res.balance;
-      //console.log(balance_update)
       if (balance_update) {
         balance = balance_update;
       }
-      //console.log("current balance: "+balance)
     });
 
     //withdraw submit
@@ -343,11 +336,9 @@ describe("withdrawal", () => {
       expect(interception.response?.statusCode).eq(200);
       let res = interception.response?.body.user;
       let balance_update = res.balance;
-      //console.log(balance_update)
       if (balance_update) {
         balance = balance_update;
       }
-      //console.log("current balance: "+balance)
     });
 
     //withdraw submit
@@ -502,27 +493,27 @@ describe("withdrawal", () => {
   // });
   //------------
 
-    // TC17 Amount = 1e999 expected Please enter a number.
-    it("TC17: withdraw amount is 1e999", () => {
-      //login
-      logIn();
-      cy.wait("@loginSubmit").then((interception) => {
-        expect(interception.response?.statusCode).eq(200);
-      });
-  
-      //withdraw submit
-      cy.get('[cid="w1"]').type("1e999");
-      cy.get('[cid="wc"]').click();
-      cy.get('input[cid="w1"]')
-        .then(($el) => $el[0].checkValidity())
-        .should("be.false");
-  
-      //logout
-      cy.visit("https://cu-bank-fe.vercel.app/");
+  // TC17 Amount = 1e999 expected Please enter a number.
+  it("TC17: withdraw amount is 1e999", () => {
+    //login
+    logIn();
+    cy.wait("@loginSubmit").then((interception) => {
+      expect(interception.response?.statusCode).eq(200);
     });
-    //------------
 
-    // TC18 Amount = 1e99 expected success
+    //withdraw submit
+    cy.get('[cid="w1"]').type("1e999");
+    cy.get('[cid="wc"]').click();
+    cy.get('input[cid="w1"]')
+      .then(($el) => $el[0].checkValidity())
+      .should("be.false");
+
+    //logout
+    cy.visit("https://cu-bank-fe.vercel.app/");
+  });
+  //------------
+
+  // TC18 Amount = 1e99 expected success
   it("TC18: withdraw amount is 1e99", () => {
     //login
     logIn();
@@ -553,9 +544,8 @@ describe("withdrawal", () => {
   });
   //------------
 
-
-   // TC19 Amount = 1e9 expected success
-   it("TC19: withdraw amount is 1e9", () => {
+  // TC19 Amount = 1e9 expected success
+  it("TC19: withdraw amount is 1e9", () => {
     //login
     logIn();
     cy.wait("@loginSubmit").then((interception) => {
