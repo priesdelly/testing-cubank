@@ -1,3 +1,30 @@
+import { faker } from '@faker-js/faker';
+
+const username = faker.finance.account(10);
+const firstName = faker.name.firstName();
+const lastName = faker.name.lastName();
+
+const register = () => {
+  cy.visit('https://cu-bank-fe.vercel.app/');
+    cy.get('[href="/register"]').click();
+
+    cy.location('href').should('include', '/register');
+
+    cy.get('#accountId').type(username);
+    cy.get('#password').type('1234');
+    cy.get('#firstName').type(firstName);
+    cy.get('#lastName').type(lastName);
+
+    cy.get('button').click();
+    cy.intercept('POST', 'https://cu-bank.herokuapp.com/api/v1/auth/register').as('register')
+    cy.wait('@register').then((interception) => {
+      if (interception.response.statusCode === 401 || interception.response.statusCode === 200) {
+        return;
+      }
+    });
+    cy.visit('https://cu-bank-fe.vercel.app/');
+}
+
 const login = () => {
   // cy.wait(3000)
   cy.visit("https://cu-bank-fe.vercel.app/");
