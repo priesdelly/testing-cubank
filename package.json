@@ -18,8 +18,10 @@
   },
   "homepage": "https://github.com/priesdelly/testing-cubank#readme",
   "devDependencies": {
+    "@faker-js/faker": "^7.6.0",
     "@types/jest": "^29.2.3",
     "@types/mocha": "^10.0.0",
+    "@types/node": "^18.11.9",
     "cypress": "^11.1.0",
     "typescript": "^4.8.4"
   }
