@@ -69,10 +69,28 @@ const deposit2 = () => {
   cy.get('[cid="dc"]').click();
 };
 
+const deposit3 = () => {
+  cy.get('[cid="d1"]').type(
+    "1e99"
+  );
+  cy.intercept("PUT", "https://cu-bank.herokuapp.com/api/v1/transactions").as(
+    "putTransaction3"
+  );
+  cy.get('[cid="dc"]').click();
+};
+
 const withdraw = () => {
   cy.get('[cid="w1"]').type("200");
   cy.intercept("PUT", "https://cu-bank.herokuapp.com/api/v1/transactions").as(
     "withdrawTransaction"
+  );
+  cy.get('[cid="wc"]').click();
+};
+
+const withdraw2 = () => {
+  cy.get('[cid="w1"]').type("1e99");
+  cy.intercept("PUT", "https://cu-bank.herokuapp.com/api/v1/transactions").as(
+    "withdrawTransaction2"
   );
   cy.get('[cid="wc"]').click();
 };
@@ -209,5 +227,20 @@ describe("scenario", () => {
       console.log(res);
       expect(res).eq(null);
     });
+  });
+
+  it("scenario 10: TC24, TC50", () => {
+    prepBalance();
+    login();
+    cy.wait("@loginSubmit").then((interception) => {
+      expect(interception.response?.statusCode).eq(200);
+    });
+
+    deposit3();
+    cy.get('[cid="d1"]')
+      .then(($el) => $el[0].checkValidity())
+      .should("be.true");
+  
+   
   });
 });
