@@ -11,6 +11,19 @@ const login = () => {
   cy.get('[cid="lc"]').click();
 };
 
+// const login2 = () => {
+//   // cy.wait(3000)
+//   cy.visit("https://cu-bank-fe.vercel.app/");
+//   cy.get("#accountId").clear();
+//   cy.get("#password").clear();
+//   cy.get("#accountId").type("1111111111");
+//   cy.get("#password").type("1111");
+//   cy.intercept("POST", "https://cu-bank.herokuapp.com/api/v1/auth/login").as(
+//     "loginSubmit2"
+//   );
+//   cy.get('[cid="lc"]').click();
+// };
+
 const deposit = () => {
   cy.get('[cid="d1"]').type("100");
   cy.intercept("PUT", "https://cu-bank.herokuapp.com/api/v1/transactions").as(
@@ -19,29 +32,38 @@ const deposit = () => {
   cy.get('[cid="dc"]').click();
 };
 
+const deposit2 = () => {
+  cy.get('[cid="d1"]').type(
+    "99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"
+  );
+  cy.intercept("PUT", "https://cu-bank.herokuapp.com/api/v1/transactions").as(
+    "putTransaction3"
+  );
+  cy.get('[cid="dc"]').click();
+};
+
 const withdraw = () => {
   cy.get('[cid="w1"]').type("200");
   cy.intercept("PUT", "https://cu-bank.herokuapp.com/api/v1/transactions").as(
-    "putTransaction"
+    "withdrawTransaction"
   );
   cy.get('[cid="wc"]').click();
 };
 
 const billpayment = () => {
-    cy.get('[cid="b1"]').click();
-    cy.get('[cid="b4"]').type("200");
-    cy.get('[cid="bc"]').click();
-}
+  cy.get('[cid="b1"]').click();
+  cy.get('[cid="b4"]').type("200");
+  cy.get('[cid="bc"]').click();
+};
 
 const billpayment2 = () => {
-    cy.get('[cid="b1"]').click();
-    cy.get('[cid="b4"]').type("20");
-    cy.intercept(
-        "PUT",
-        "https://cu-bank.herokuapp.com/api/v1/transactions"
-      ).as("putTransaction");
-    cy.get('[cid="bc"]').click();
-}
+  cy.get('[cid="b1"]').click();
+  cy.get('[cid="b4"]').type("20");
+  cy.intercept("PUT", "https://cu-bank.herokuapp.com/api/v1/transactions").as(
+    "putTransaction"
+  );
+  cy.get('[cid="bc"]').click();
+};
 
 const prepBalance = () => {
   login();
@@ -69,10 +91,8 @@ const prepBalance = () => {
   });
 };
 
-describe("withdrawal", () => {
-
+describe("scenario", () => {
   it("scenario 4: TC24, TC33, TC52", () => {
-    
     prepBalance();
 
     // TC24: login pass
@@ -95,7 +115,6 @@ describe("withdrawal", () => {
   });
 
   it("scenario 6: TC24, TC33, TC94", () => {
-    
     prepBalance();
 
     // TC24: login pass
@@ -113,13 +132,11 @@ describe("withdrawal", () => {
     // TC94: bill payment doesn't pass
     billpayment();
     cy.get('[cid="billpayment-error-mes"]')
-    .contains("your balance isn't not enough")
-    .should("exist");
+      .contains("your balance isn't not enough")
+      .should("exist");
   });
 
-
   it("scenario 7: TC24, TC33, TC95", () => {
-    
     prepBalance();
 
     // TC24: login pass
@@ -137,23 +154,33 @@ describe("withdrawal", () => {
     // TC95: bill payment pass
     billpayment2();
     cy.wait("@putTransaction").then((interception) => {
-        expect(interception.response?.statusCode).eq(200);
-      });
+      expect(interception.response?.statusCode).eq(200);
+    });
   });
 
-//   it("scenario 10: TC24, TC115", () => {
+  // it("scenario 9: TC24, TC35, TC35", () => {
 
-//     // TC24: login pass
-//     login();
-//     cy.wait("@loginSubmit").then((interception) => {
-//       expect(interception.response?.statusCode).eq(200);
-//     });
+  //   prepBalance();
 
-//     // TC115: timeout
-//     cy.wait(10000)
-//     cy.clearLocalStorage()
-//     cy.get('[cid="bc"]').click();
+  //   // TC24: login pass
+  //   login2();
+  //   cy.wait("@loginSubmit2").then((interception) => {
+  //     expect(interception.response?.statusCode).eq(200);
+  //   });
 
-   
-//   });
+  //   // TC35: max deposit
+  //   deposit2();
+  //   cy.wait("@putTransaction3").then((interception) => {
+  //     expect(interception.response?.statusCode).eq(200);
+  //   });
+
+  //   //TC35: max deposit
+  //   deposit2();
+  //   cy.wait("@putTransaction3").then((interception) => {
+  //     expect(interception.response?.statusCode).eq(200);
+  //     let res = interception.response?.body.data.balance;
+  //     console.log(res);
+  //     expect(res).eq(" ");
+  //   });
+  // });
 });
