@@ -1,1373 +1,544 @@
-import { execPath } from "process";
-import fixture from "../fixtures/transfer_data.json";
 
+const API_URL_TRANSACTION = "https://cu-bank.herokuapp.com/api/v1/transactions";
+const API_URL_AUTH = "https://cu-bank.herokuapp.com/api/v1/auth";
 
-context('Transfer system', () => {
-  var account_id1 = fixture.account_id_1;
-  var password_1 = fixture.password_1;
-  var account_id2 = fixture.account_id_2;
-  var password_2 = fixture.password_2;
-  var old_balance_id1;
-  var old_balance_id2;
-  var new_balance_id1;
-  var new_balance_id2;
-  var deposit_amount = fixture.amount;
-  var transfer_amount;
-  const clear = Cypress.LocalStorage.clear
+const username1 = '4684246842';
+const password1 = '4684';
+const username2 = '0819889541';
+const password2 = '4684';
 
-  Cypress.LocalStorage.clear = function (keys, ls, rs) {
-    return
-  }
+const doLoginAccount1 = () => {
+  cy.clearLocalStorage();
 
-  const visit_site = () => {
-    cy.visit("https://cu-bank-fe.vercel.app/");
-  }
+  cy.visit('https://cu-bank-fe.vercel.app');
 
-  const login_and_get_balance = (account, password, is_new) => {
-    cy.get("#accountId").clear();
-    cy.get("#password").clear();
-    cy.get("#accountId").type(account);
-    cy.get("#password").type(password);
+  cy.get('#accountId').clear();
+  cy.get('#password').clear();
+  cy.get('#accountId').type(username1);
+  cy.get('#password').type(password1);
+  cy.intercept('POST', 'https://cu-bank.herokuapp.com/api/v1/auth/login').as('loginSuccess')
+  cy.get('button').click();
+  // cy.wait('@loginSuccess').then((interception) => {
+  //   expect(interception.response?.statusCode).eq(200);
+  // });
+};
 
-    cy.intercept("POST", "https://cu-bank.herokuapp.com/api/v1/auth/login").as(
-      "loginSubmit"
-    );
+const loginAccount2 = () => {
+  return cy.request({
+    method: 'POST',
+    url: API_URL_AUTH + "/login",
+    body: {
+      accountId: username2,
+      password: password2,
+    }
+  })
+}
 
-    cy.get('[cid="lc"]').click();
+const prepBalance = (prepBalance = -999) => {
 
-    cy.wait("@loginSubmit", { timeout: 10000 }).then((interception) => {
-      expect(interception.response?.statusCode).eq(200);
-    });
+  cy.wait("@loginSuccess").then((interception) => {
+    expect(interception.response?.statusCode).eq(200);
 
-    cy.intercept("GET", "https://cu-bank.herokuapp.com/api/v1/transactions/").as('fetchTransaction');
-
-    cy.wait('@fetchTransaction', { timeout: 10000 }).then((interception) => {
-      expect(interception.response?.statusCode).eq(200);
-      let res = interception.response;
-      const val = res.body.data.balance;
-      if (val || val==0) {
-        if (account == account_id1) {
-          if (is_new) {
-            new_balance_id1 = val;
-          }
-          else {
-            old_balance_id1 = val;
-          }
-        }
-        else if (account == account_id2) {
-          if (is_new) {
-            new_balance_id2 = val;
-          }
-          else {
-            old_balance_id2 = val;
-          }
-        }
+    cy.intercept('GET', 'https://cu-bank.herokuapp.com/api/v1/transactions').as('getTransaction');
+    cy.wait('@getTransaction').then((interception2) => {
+      expect(interception2.response?.statusCode).eq(200);
+      let res = interception2.response?.body;
+      let balanceUpdate = res.data.balance;
+      if (balanceUpdate > 0) {
+        cy.get('[cid="w1"]').type(JSON.stringify(balanceUpdate));
+        cy.intercept('PUT', 'https://cu-bank.herokuapp.com/api/v1/transactions').as('putTransaction')
+        cy.get('[cid="wc"]').click();
+        cy.wait('@putTransaction').then((interception3) => {
+          expect(interception3.response?.statusCode).eq(200);
+        });
       }
+      cy.get('[cid="d1"]').clear();
+      cy.get('[cid="w1"]').clear();
+      if (prepBalance === -999) {
+        cy.get('[cid="d1"]').type("100");
+      } else {
+        cy.get('[cid="d1"]').type(prepBalance + '');
+      }
+
+      cy.intercept('PUT', 'https://cu-bank.herokuapp.com/api/v1/transactions').as('putTransaction2')
+      cy.get('[cid="dc"]').click();
+      cy.wait('@putTransaction2').then((interception4) => {
+        expect(interception4.response?.statusCode).eq(200);
+      });
     });
-  };
+  });
+};
 
-  const logout = () => {
-    cy.clearLocalStorage()
-    cy.visit("https://cu-bank-fe.vercel.app/");
-  };
+describe('Transfer scenario', () => {
 
-  const deposit = (amount) => {
-    cy.get(':nth-child(3) > :nth-child(2) > form > label > #among').clear();
-    cy.get(":nth-child(3) > :nth-child(2) > form > label > #among").type(amount);
-    cy.get(':nth-child(3) > :nth-child(2) > form > button').click();
-  };
-
-  const transfer = (id, amount) => {
-    cy.get("#accountId").clear();
-    cy.get("#accountId").type(id);
-    cy.get(
-      ":nth-child(5) > :nth-child(2) > form > :nth-child(2) > label > #among"
-    ).clear();
-    cy.get(
-      ":nth-child(5) > :nth-child(2) > form > :nth-child(2) > label > #among"
-    ).type(amount);
-    cy.get(":nth-child(5) > :nth-child(2) > form > button").click();
-  };
-
-  describe("TC1", () => {
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id1", () => {
-      login_and_get_balance(account_id1, password_1, false)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("deposit", () => {
-      deposit(deposit_amount)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("transfer when balance is not enough", ()=> {
-      transfer(account_id1, old_balance_id2+100)
-    })
-
-    it("Alert your balance isn't not enough", ()=> {
-      cy.get(':nth-child(3) > label').should("have.text", "your balance isn't not enough");
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id1", () => {
-      login_and_get_balance(account_id1, password_1, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id1 == new_balance_id1).to.be.true
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id2", () => {
-      login_and_get_balance(account_id2, password_2, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id2 == new_balance_id2).to.be.true
-    })
-
+  it("TC1 - your balance isn't enough", () => {
+    doLoginAccount1();
+    prepBalance();
+    cy.get('input[cid="t1"]').type(username2);
+    cy.get('input[cid="t2"]').type('101');
+    cy.get('button[cid="tc"]').click()
+      .then(() => {
+        cy.get('label[cid="transfer-error-mes"]')
+          .contains("your balance isn't not enough")
+          .should('exist');
+      });
   });
 
-  describe("TC2", () => {
+  it("TC2 - success transfer amg = 100", () => {
 
-    it("visit site", () => {
-      visit_site()
-    })
+    let amg = 100;
 
-    it("login and get old balance id1", () => {
-      login_and_get_balance(account_id1, password_1, false)
-    })
+    loginAccount2()
+      .then((res) => {
+        expect(res.status).to.eq(200);
+        let balance = res.body.user.balance;
+        cy.setCookie('old-balance', balance + '');
+      });
 
-    it("logout", ()=> {
-      logout()
-    })
+    doLoginAccount1();
+    prepBalance();
 
-    it("visit site", () => {
-      visit_site()
-    })
+    cy.get('input[cid="t1"]').type(username2);
+    cy.get('input[cid="t2"]').type(amg + '');
+    cy.intercept('PUT', 'https://cu-bank.herokuapp.com/api/v1/transactions/').as('putTransfer');
+    cy.get('button[cid="tc"]').click();
+    cy.wait('@putTransfer', { timeout: 10000 }).then((interception) => {
+      expect(interception.response?.statusCode).eq(200);
+      loginAccount2().then((res) => {
+        cy.getCookie('old-balance').then((cookie) => {
+          let oldBalance = cookie.value;
+          let shouldBeBalance = Number(oldBalance) + amg;
+          let currentBalance = res.body.user.balance;
+          expect(currentBalance + '').eq(shouldBeBalance + '');
 
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("deposit", () => {
-      deposit(deposit_amount)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("transfer when balance is enough", ()=> {
-      transfer_amount = old_balance_id2
-      transfer(account_id1, transfer_amount)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id1", () => {
-      login_and_get_balance(account_id1, password_1, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id1 + transfer_amount == new_balance_id1).to.be.true
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id2", () => {
-      login_and_get_balance(account_id2, password_2, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id2 == new_balance_id2 + transfer_amount).to.be.true
-    })
-
+          console.log('current balance: ' + res.body.user.balance);
+          console.log('old balance: ' + oldBalance);
+          console.log('among: ' + amg);
+        });
+      });
+    });
   });
 
-  describe("TC3", () => {
+  it('TC3 - success transfer amg = 99', () => {
 
-    it("visit site", () => {
-      visit_site()
-    })
+    let amg = 99;
 
-    it("login and get old balance id1", () => {
-      login_and_get_balance(account_id1, password_1, false)
-    })
+    loginAccount2()
+      .then((res) => {
+        expect(res.status).to.eq(200);
+        let balance = res.body.user.balance;
+        cy.setCookie('old-balance', balance + '');
+      });
 
-    it("logout", ()=> {
-      logout()
-    })
+    doLoginAccount1();
+    prepBalance();
 
-    it("visit site", () => {
-      visit_site()
-    })
+    cy.get('input[cid="t1"]').type(username2);
+    cy.get('input[cid="t2"]').type(amg + '');
+    cy.intercept('PUT', 'https://cu-bank.herokuapp.com/api/v1/transactions/').as('putTransfer');
+    cy.get('button[cid="tc"]').click();
+    cy.wait('@putTransfer', { timeout: 10000 }).then((interception) => {
+      expect(interception.response?.statusCode).eq(200);
+      loginAccount2().then((res) => {
+        cy.getCookie('old-balance').then((cookie) => {
+          let oldBalance = cookie.value;
+          let shouldBeBalance = Number(oldBalance) + amg;
+          let currentBalance = res.body.user.balance;
+          expect(currentBalance + '').eq(shouldBeBalance + '');
 
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("deposit", () => {
-      deposit(deposit_amount)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("transfer when balance is enough", ()=> {
-      transfer_amount = old_balance_id2
-      transfer(account_id1, transfer_amount)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id1", () => {
-      login_and_get_balance(account_id1, password_1, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id1 + transfer_amount == new_balance_id1).to.be.true
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id2", () => {
-      login_and_get_balance(account_id2, password_2, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id2 == new_balance_id2 + transfer_amount).to.be.true
-    })
-
+          console.log('current balance: ' + res.body.user.balance);
+          console.log('old balance: ' + oldBalance);
+          console.log('among: ' + amg);
+        });
+      });
+    });
   });
 
-  describe("TC4", () => {
+  it('TC4 - success transfer amg = 50', () => {
+
+    let amg = 50;
+
+    loginAccount2()
+      .then((res) => {
+        expect(res.status).to.eq(200);
+        let balance = res.body.user.balance;
+        cy.setCookie('old-balance', balance + '');
+      });
+
+    doLoginAccount1();
+    prepBalance();
+
+    cy.get('input[cid="t1"]').type(username2);
+    cy.get('input[cid="t2"]').type(amg + '');
+    cy.intercept('PUT', 'https://cu-bank.herokuapp.com/api/v1/transactions/').as('putTransfer');
+    cy.get('button[cid="tc"]').click();
+    cy.wait('@putTransfer', { timeout: 10000 }).then((interception) => {
+      expect(interception.response?.statusCode).eq(200);
+      loginAccount2().then((res) => {
+        cy.getCookie('old-balance').then((cookie) => {
+          let oldBalance = cookie.value;
+          let shouldBeBalance = Number(oldBalance) + amg;
+          let currentBalance = res.body.user.balance;
+          expect(currentBalance + '').eq(shouldBeBalance + '');
+
+          console.log('current balance: ' + res.body.user.balance);
+          console.log('old balance: ' + oldBalance);
+          console.log('among: ' + amg);
+        });
+      });
+    });
+  });
+
+  it('TC5 - success transfer amg = 2', () => {
+
+    let amg = 2;
+
+    loginAccount2()
+      .then((res) => {
+        expect(res.status).to.eq(200);
+        let balance = res.body.user.balance;
+        cy.setCookie('old-balance', balance + '');
+      });
+
+    doLoginAccount1();
+    prepBalance();
+
+    cy.get('input[cid="t1"]').type(username2);
+    cy.get('input[cid="t2"]').type(amg + '');
+    cy.intercept('PUT', 'https://cu-bank.herokuapp.com/api/v1/transactions/').as('putTransfer');
+    cy.get('button[cid="tc"]').click();
+    cy.wait('@putTransfer', { timeout: 10000 }).then((interception) => {
+      expect(interception.response?.statusCode).eq(200);
+      loginAccount2().then((res) => {
+        cy.getCookie('old-balance').then((cookie) => {
+          let oldBalance = cookie.value;
+          let shouldBeBalance = Number(oldBalance) + amg;
+          let currentBalance = res.body.user.balance;
+          expect(currentBalance + '').eq(shouldBeBalance + '');
+
+          console.log('current balance: ' + res.body.user.balance);
+          console.log('old balance: ' + oldBalance);
+          console.log('among: ' + amg);
+        });
+      });
+    });
+  });
+
+  it('TC6 - success transfer amg = 1', () => {
+
+    let amg = 1;
+
+    loginAccount2()
+      .then((res) => {
+        expect(res.status).to.eq(200);
+        let balance = res.body.user.balance;
+        cy.setCookie('old-balance', balance + '');
+      });
+
+    doLoginAccount1();
+    prepBalance();
+
+    cy.get('input[cid="t1"]').type(username2);
+    cy.get('input[cid="t2"]').type(amg + '');
+    cy.intercept('PUT', 'https://cu-bank.herokuapp.com/api/v1/transactions/').as('putTransfer');
+    cy.get('button[cid="tc"]').click();
+    cy.wait('@putTransfer', { timeout: 10000 }).then((interception) => {
+      expect(interception.response?.statusCode).eq(200);
+      loginAccount2().then((res) => {
+        cy.getCookie('old-balance').then((cookie) => {
+          let oldBalance = cookie.value;
+          let shouldBeBalance = Number(oldBalance) + amg;
+          let currentBalance = res.body.user.balance;
+          expect(currentBalance + '').eq(shouldBeBalance + '');
+
+          console.log('current balance: ' + res.body.user.balance);
+          console.log('old balance: ' + oldBalance);
+          console.log('among: ' + amg);
+        });
+      });
+    });
+  });
+
+  it('TC7 - fail transfer amg = 0', () => {
+    let amg = 0;
+    doLoginAccount1();
+    cy.wait("@loginSuccess", { timeout: 10000 }).then((interception) => {
+      expect(interception.response?.statusCode).eq(200);
+      cy.get('input[cid="t1"]').type(username2);
+      cy.get('input[cid="t2"]').type(amg + '');
+      cy.get('button[cid="tc"]').click();
+      cy.get('label[cid="transfer-error-mes"]')
+        .contains('Please put only number')
+        .should('exist');
+    });
+  });
+
+  it('TC8 - success transfer amg = 1.0', () => {
+
+    let amg = '1.0';
+
+    loginAccount2()
+      .then((res) => {
+        expect(res.status).to.eq(200);
+        let balance = res.body.user.balance;
+        cy.setCookie('old-balance', balance + '');
+      });
+
+    doLoginAccount1();
+    prepBalance();
+
+    cy.get('input[cid="t1"]').type(username2);
+    cy.get('input[cid="t2"]').type(amg);
+    cy.intercept('PUT', 'https://cu-bank.herokuapp.com/api/v1/transactions/').as('putTransfer');
+    cy.get('button[cid="tc"]').click();
+    cy.wait('@putTransfer', { timeout: 10000 }).then((interception) => {
+      expect(interception.response?.statusCode).eq(200);
+      loginAccount2().then((res) => {
+        cy.getCookie('old-balance').then((cookie) => {
+          let oldBalance = cookie.value;
+          let shouldBeBalance = Number(oldBalance) + Number(amg);
+          let currentBalance = res.body.user.balance;
+          expect(currentBalance + '').eq(shouldBeBalance + '');
+
+          console.log('current balance: ' + res.body.user.balance);
+          console.log('old balance: ' + oldBalance);
+          console.log('among: ' + amg);
+        });
+      });
+    });
+  });
+
+  it('TC9 - fail transfer amg = 1.01', () => {
+    doLoginAccount1();
+    cy.wait("@loginSuccess", { timeout: 10000 }).then((interception) => {
+      cy.get('input[cid="t1"]').type(username2);
+      cy.get('input[cid="t2"]').type('1.01');
+      cy.get('button[cid="tc"]').click()
+        .then(() => {
+          cy.get('input[cid="t2"]').then($el => $el[0].checkValidity()).should('be.false');
+        });
+    });
+  });
+
+  it('TC10 - fail transfer amg = 1.0000000597', () => {
+    doLoginAccount1();
+    cy.wait("@loginSuccess", { timeout: 10000 }).then((interception) => {
+      expect(interception.response?.statusCode).eq(200);
+      cy.get('input[cid="t1"]').type(username2);
+      cy.get('input[cid="t2"]').type('1.0000000597');
+      cy.get('button[cid="tc"]').click().then(() => {
+        cy.get('input[cid="t2"]').then($el => $el[0].checkValidity()).should('be.false');
+      });
+    });
+  });
+
+  it('TC11 - success transfer amg = 1.0000000596', () => {
+
+    let amg = '1.0000000596';
+
+    loginAccount2()
+      .then((res) => {
+        expect(res.status).to.eq(200);
+        let balance = res.body.user.balance;
+        cy.setCookie('old-balance', balance + '');
+      });
+
+    doLoginAccount1();
+    prepBalance();
+
+    cy.get('input[cid="t1"]').type(username2);
+    cy.get('input[cid="t2"]').type(amg);
+    cy.intercept('PUT', 'https://cu-bank.herokuapp.com/api/v1/transactions/').as('putTransfer');
+    cy.get('button[cid="tc"]').click();
+    cy.wait('@putTransfer', { timeout: 10000 }).then((interception) => {
+      expect(interception.response?.statusCode).eq(200);
+      loginAccount2().then((res) => {
+        cy.getCookie('old-balance').then((cookie) => {
+          let oldBalance = cookie.value;
+          let shouldBeBalance = Math.round(Number(oldBalance) + Number(amg));
+          let currentBalance = res.body.user.balance;
+          expect(currentBalance + '').eq(shouldBeBalance + '');
+
+          console.log('current balance: ' + res.body.user.balance);
+          console.log('old balance: ' + oldBalance);
+          console.log('among: ' + amg);
+        });
+      });
+    });
+  });
+
+  it('TC17 - fail transfer amg = 1e999', () => {
+    doLoginAccount1();
+    cy.wait("@loginSuccess", { timeout: 10000 }).then((interception) => {
+      expect(interception.response?.statusCode).eq(200);
+      cy.get('input[cid="t1"]').type(username2);
+      cy.get('input[cid="t2"]').type('1e999');
+      cy.get('button[cid="tc"]').click()
+        .then(() => {
+          cy.get('input[cid="t2"]').then($el => $el[0].checkValidity()).should('be.false');
+        });
+
+    });
+  });
+
+  it('TC18 - success transfer amg = 1e99', () => {
+
+    let amg = '1e99';
+
+    loginAccount2()
+      .then((res) => {
+        expect(res.status).to.eq(200);
+        let balance = res.body.user.balance;
+        cy.setCookie('old-balance', balance + '');
+      });
+
+    doLoginAccount1();
+    prepBalance();
+
+    cy.get('input[cid="t1"]').type(username2);
+    cy.get('input[cid="t2"]').type(amg);
+    cy.intercept('PUT', 'https://cu-bank.herokuapp.com/api/v1/transactions/').as('putTransfer');
+    cy.get('button[cid="tc"]').click();
+    cy.wait('@putTransfer', { timeout: 10000 }).then((interception) => {
+      expect(interception.response?.statusCode).eq(200);
+      loginAccount2().then((res) => {
+        cy.getCookie('old-balance').then((cookie) => {
+          let oldBalance = cookie.value;
+          let shouldBeBalance = Math.round(Number(oldBalance) + 1);
+          let currentBalance = res.body.user.balance;
+          expect(currentBalance + '').eq(shouldBeBalance + '');
+          console.log('current balance: ' + res.body.user.balance);
+          console.log('old balance: ' + oldBalance);
+          console.log('among: ' + 1);
+        });
+      });
+    });
+  });
+
+  it('TC19 - success transfer amg = 1e9', () => {
+
+    let amg = '1e9';
+
+    loginAccount2()
+      .then((res) => {
+        expect(res.status).to.eq(200);
+        let balance = res.body.user.balance;
+        cy.setCookie('old-balance', balance + '');
+      });
+
+    doLoginAccount1();
+    prepBalance();
+
+    cy.get('input[cid="t1"]').type(username2);
+    cy.get('input[cid="t2"]').type(amg);
+    cy.intercept('PUT', 'https://cu-bank.herokuapp.com/api/v1/transactions/').as('putTransfer');
+    cy.get('button[cid="tc"]').click();
+    cy.wait('@putTransfer', { timeout: 10000 }).then((interception) => {
+      expect(interception.response?.statusCode).eq(200);
+      loginAccount2().then((res) => {
+        cy.getCookie('old-balance').then((cookie) => {
+          let oldBalance = cookie.value;
+          let shouldBeBalance = Math.round(Number(oldBalance) + 1);
+          let currentBalance = res.body.user.balance;
+          expect(currentBalance + '').eq(shouldBeBalance + '');
+          console.log('current balance: ' + res.body.user.balance);
+          console.log('old balance: ' + oldBalance);
+          console.log('among: ' + 1);
+        });
+      });
+    });
+  });
+
+  it('TC20 - fail put account id with 11 characters', () => {
+    let amg = 50;
+    doLoginAccount1();
+    cy.wait("@loginSuccess", { timeout: 10000 }).then((interception) => {
+      expect(interception.response?.statusCode).eq(200);
+      cy.get('input[cid="t1"]').type(username2 + '1');
+      cy.get('input[cid="t2"]').type(amg + '');
+      cy.get('button[cid="tc"]').click()
+        .then(() => {
+          cy.get('label[cid="transfer-error-mes"]')
+            .contains('Please fill accountId 10 digits')
+            .should('exist');
+        });
+    });
+  });
+
+  it('TC21 - fail put account id with 9 characters', () => {
+    let amg = 50;
+    doLoginAccount1();
+    cy.wait("@loginSuccess", { timeout: 10000 }).then((interception) => {
+      expect(interception.response?.statusCode).eq(200);
+      cy.get('input[cid="t1"]').type(username2.substring(0, username2.length - 1));
+      cy.get('input[cid="t2"]').type(amg + '');
+      cy.get('button[cid="tc"]').click()
+        .then(() => {
+          cy.get('label[cid="transfer-error-mes"]')
+            .contains('Please fill accountId 10 digits')
+            .should('exist');
+        });
+    });
+  });
+
+  it('TC22 - fail put account id wording "nine000001"', () => {
+    let amg = 50;
+    doLoginAccount1();
+    cy.wait("@loginSuccess", { timeout: 10000 }).then((interception) => {
+      expect(interception.response?.statusCode).eq(200);
+      cy.get('input[cid="t1"]').type('nine000001');
+      cy.get('input[cid="t2"]').type(amg + '');
+      cy.get('button[cid="tc"]').click()
+        .then(() => {
+          cy.get('label[cid="transfer-error-mes"]')
+            .contains('Please put accountId only number')
+            .should('exist');
+        });
+    });
+  });
+
+
+  it('TC23 - failed send money to not found user', () => {
+
+    let amg = '50';
+
+    loginAccount2()
+      .then((res) => {
+        expect(res.status).to.eq(200);
+        let balance = res.body.user.balance;
+        cy.setCookie('old-balance', balance + '');
+      });
+
+    doLoginAccount1();
+    prepBalance();
+
+    cy.get('input[cid="t1"]').type('1122334455');
+    cy.get('input[cid="t2"]').type(amg);
+    cy.intercept('PUT', 'https://cu-bank.herokuapp.com/api/v1/transactions/').as('putTransfer');
+    cy.get('button[cid="tc"]').click();
+    cy.wait('@putTransfer', { timeout: 10000 }).then((interception) => {
+      expect(interception.response?.statusCode).eq(400);
+      cy.get('label[cid="transfer-error-mes"]')
+        .contains('Not found your target account Id')
+        .should('exist');
+    });
+  });
+
+  it('TC24 - failed send money owner user', () => {
+
+    let amg = '50';
     
-    transfer_amount = 50
+    doLoginAccount1();
+    prepBalance();
 
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id1", () => {
-      login_and_get_balance(account_id1, password_1, false)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("deposit", () => {
-      deposit(deposit_amount)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("transfer when balance is enough", ()=> {
-      transfer(account_id1, transfer_amount)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id1", () => {
-      login_and_get_balance(account_id1, password_1, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id1 + transfer_amount == new_balance_id1).to.be.true
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id2", () => {
-      login_and_get_balance(account_id2, password_2, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id2 == new_balance_id2 + transfer_amount).to.be.true
-    })
-
+    cy.get('input[cid="t1"]').type(username1);
+    cy.get('input[cid="t2"]').type(amg);
+    cy.get('button[cid="tc"]').click()
+      .then(() => {
+        cy.get('label[cid="transfer-error-mes"]')
+          .contains('Cannot transfer to your own id')
+          .should('exist');
+      });
   });
 
-  describe("TC5", () => {
-    
-    transfer_amount = 2
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id1", () => {
-      login_and_get_balance(account_id1, password_1, false)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("deposit", () => {
-      deposit(deposit_amount)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("transfer when balance is enough", ()=> {
-      transfer(account_id1, transfer_amount)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id1", () => {
-      login_and_get_balance(account_id1, password_1, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id1 + transfer_amount == new_balance_id1).to.be.true
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id2", () => {
-      login_and_get_balance(account_id2, password_2, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id2 == new_balance_id2 + transfer_amount).to.be.true
-    })
-
-  });
-
-  describe("TC6", () => {
-    
-    transfer_amount = 1
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id1", () => {
-      login_and_get_balance(account_id1, password_1, false)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("deposit", () => {
-      deposit(deposit_amount)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("transfer when balance is enough", ()=> {
-      transfer(account_id1, transfer_amount)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id1", () => {
-      login_and_get_balance(account_id1, password_1, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id1 + transfer_amount == new_balance_id1).to.be.true
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id2", () => {
-      login_and_get_balance(account_id2, password_2, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id2 == new_balance_id2 + transfer_amount).to.be.true
-    })
-
-  });
-
-  describe("TC7", () => {
-    
-    transfer_amount = 0
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id1", () => {
-      login_and_get_balance(account_id1, password_1, false)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("transfer 0", ()=> {
-      transfer(account_id1, transfer_amount)
-    })
-
-    it("Alert please put only number", ()=> {
-      cy.get(':nth-child(3) > label').should("have.text", "Please put only number");
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id1", () => {
-      login_and_get_balance(account_id1, password_1, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id1 == new_balance_id1).to.be.true
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id2", () => {
-      login_and_get_balance(account_id2, password_2, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id2 == new_balance_id2).to.be.true
-    })
-
-  });
-
-  describe("TC8", () => {
-    
-    transfer_amount = '1.0'
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id1", () => {
-      login_and_get_balance(account_id1, password_1, false)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("deposit", () => {
-      deposit(deposit_amount)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("transfer when balance is enough", ()=> {
-      transfer(account_id1, transfer_amount)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id1", () => {
-      login_and_get_balance(account_id1, password_1, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id1 + parseFloat(transfer_amount) == new_balance_id1).to.be.true
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id2", () => {
-      login_and_get_balance(account_id2, password_2, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id2 == new_balance_id2 + parseFloat(transfer_amount)).to.be.true
-    })
-
-  });
-
-  describe("TC9", () => {
-    
-    transfer_amount = 1.01
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id1", () => {
-      login_and_get_balance(account_id1, password_1, false)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("transfer 1.01", ()=> {
-      cy.get("#accountId").clear();
-      cy.get("#accountId").type(account_id1);
-      cy.get(
-        ":nth-child(5) > :nth-child(2) > form > :nth-child(2) > label > #among"
-      ).clear();
-      cy.get(
-        ":nth-child(5) > :nth-child(2) > form > :nth-child(2) > label > #among"
-      ).type(String(1.01));
-      cy.get(":nth-child(5) > :nth-child(2) > form > button").click();
-      cy.get(":nth-child(5) > :nth-child(2) > form > :nth-child(2) > label > #among")
-      .then(($el) => $el[0].checkValidity())
-      .should("be.false");
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id1", () => {
-      login_and_get_balance(account_id1, password_1, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id1 == new_balance_id1).to.be.true
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id2", () => {
-      login_and_get_balance(account_id2, password_2, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id2 == new_balance_id2).to.be.true
-    })
-
-  });
-
-  describe("TC10", () => {
-    
-    transfer_amount = 1.0000000597
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id1", () => {
-      login_and_get_balance(account_id1, password_1, false)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("transfer 1.01", ()=> {
-      cy.get("#accountId").clear();
-      cy.get("#accountId").type(account_id1);
-      cy.get(
-        ":nth-child(5) > :nth-child(2) > form > :nth-child(2) > label > #among"
-      ).clear();
-      cy.get(
-        ":nth-child(5) > :nth-child(2) > form > :nth-child(2) > label > #among"
-      ).type(String(1.01));
-      cy.get(":nth-child(5) > :nth-child(2) > form > button").click();
-      cy.get(":nth-child(5) > :nth-child(2) > form > :nth-child(2) > label > #among")
-      .then(($el) => $el[0].checkValidity())
-      .should("be.false");
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id1", () => {
-      login_and_get_balance(account_id1, password_1, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id1 == new_balance_id1).to.be.true
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id2", () => {
-      login_and_get_balance(account_id2, password_2, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id2 == new_balance_id2).to.be.true
-    })
-
-  });
-
-  describe("TC11", () => {
-    
-    transfer_amount = '1.0000000596'
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id1", () => {
-      login_and_get_balance(account_id1, password_1, false)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("deposit", () => {
-      deposit(deposit_amount)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("transfer when balance is enough", ()=> {
-      transfer(account_id1, transfer_amount)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id1", () => {
-      login_and_get_balance(account_id1, password_1, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id1 + Math.round(parseFloat(transfer_amount)) == new_balance_id1).to.be.true
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id2", () => {
-      login_and_get_balance(account_id2, password_2, true)
-    })
-
-    it("Check old_balance_id2 = new_balance_id2", ()=> {
-      expect(old_balance_id2 == new_balance_id2 + Math.round(parseFloat(transfer_amount))).to.be.true
-    })
-
-  });
-
-  describe("TC13", () => {
-    
-    transfer_amount = -1
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id1", () => {
-      login_and_get_balance(account_id1, password_1, false)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("transfer -1", ()=> {
-      transfer(account_id1, transfer_amount)
-    })
-
-    it("Alert please put only number", ()=> {
-      cy.get(':nth-child(3) > label').should("have.text", "Please put only number");
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id1", () => {
-      login_and_get_balance(account_id1, password_1, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id1 == new_balance_id1).to.be.true
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id2", () => {
-      login_and_get_balance(account_id2, password_2, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id2 == new_balance_id2).to.be.true
-    })
-
-  });
-
-  describe("TC17", () => {
-    
-    transfer_amount = '1e999'
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id1", () => {
-      login_and_get_balance(account_id1, password_1, false)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("transfer 1e999", ()=> {
-      cy.get("#accountId").clear();
-      cy.get("#accountId").type(account_id1);
-      cy.get(
-        ":nth-child(5) > :nth-child(2) > form > :nth-child(2) > label > #among"
-      ).clear();
-      cy.get(
-        ":nth-child(5) > :nth-child(2) > form > :nth-child(2) > label > #among"
-      ).type(transfer_amount);
-      cy.get(":nth-child(5) > :nth-child(2) > form > button").click();
-      cy.get(":nth-child(5) > :nth-child(2) > form > :nth-child(2) > label > #among")
-      .then(($el) => $el[0].checkValidity())
-      .should("be.false");
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id1", () => {
-      login_and_get_balance(account_id1, password_1, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id1 == new_balance_id1).to.be.true
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id2", () => {
-      login_and_get_balance(account_id2, password_2, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id2 == new_balance_id2).to.be.true
-    })
-
-  });
-
-describe("TC18", () => {
-    
-    transfer_amount = '1e99'
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id1", () => {
-      login_and_get_balance(account_id1, password_1, false)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("transfer when balance is enough", ()=> {
-      transfer(account_id1, transfer_amount)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id1", () => {
-      login_and_get_balance(account_id1, password_1, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id1 + Number(transfer_amount[0]) == new_balance_id1).to.be.true
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id2", () => {
-      login_and_get_balance(account_id2, password_2, true)
-    })
-
-    it("Check old_balance_id2 = new_balance_id2", ()=> {
-      expect(old_balance_id2 == new_balance_id2 + Number(transfer_amount[0])).to.be.true
-    })
-
-  });
-
-  describe("TC19", () => {
-    
-    transfer_amount = '1e9'
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id1", () => {
-      login_and_get_balance(account_id1, password_1, false)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("transfer when balance is enough", ()=> {
-      transfer(account_id1, transfer_amount)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id1", () => {
-      login_and_get_balance(account_id1, password_1, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id1 + Number(transfer_amount[0]) == new_balance_id1).to.be.true
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id2", () => {
-      login_and_get_balance(account_id2, password_2, true)
-    })
-
-    it("Check old_balance_id2 = new_balance_id2", ()=> {
-      expect(old_balance_id2 == new_balance_id2 + Number(transfer_amount[0])).to.be.true
-    })
-
-  });
-
-  describe("TC20", () => {
-    
-    transfer_amount = 50
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id1", () => {
-      login_and_get_balance(account_id1, password_1, false)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("deposit", () => {
-      deposit(deposit_amount)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("transfer when account_id is incorrect", ()=> {
-      transfer(account_id1.concat('1'), transfer_amount)
-    })
-
-    it("Alert please fill accountId 10 digits", ()=> {
-      cy.get(':nth-child(3) > label').should("have.text", "Please fill accountId  10 digits");
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id1", () => {
-      login_and_get_balance(account_id1, password_1, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id1 == new_balance_id1).to.be.true
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id2", () => {
-      login_and_get_balance(account_id2, password_2, true)
-    })
-
-    it("Check old_balance_id2 = new_balance_id2", ()=> {
-      expect(old_balance_id2 == new_balance_id2).to.be.true
-    })
-
-  });
-
-  describe("TC21", () => {
-    
-    transfer_amount = 50
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id1", () => {
-      login_and_get_balance(account_id1, password_1, false)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("deposit", () => {
-      deposit(deposit_amount)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("transfer when account_id is incorrect", ()=> {
-      transfer(account_id1.slice(0,9), transfer_amount)
-    })
-
-    it("Alert please fill accountId 10 digits", ()=> {
-      cy.get(':nth-child(3) > label').should("have.text", "Please fill accountId  10 digits");
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id1", () => {
-      login_and_get_balance(account_id1, password_1, true)
-    })
-
-    it("Check old_balance_id1 = new_balance_id1", ()=> {
-      expect(old_balance_id1 == new_balance_id1).to.be.true
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id2", () => {
-      login_and_get_balance(account_id2, password_2, true)
-    })
-
-    it("Check old_balance_id2 = new_balance_id2", ()=> {
-      expect(old_balance_id2 == new_balance_id2).to.be.true
-    })
-
-  });
-
-  describe("TC22", () => {
-    
-    transfer_amount = 50
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("deposit", () => {
-      deposit(deposit_amount)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("transfer when account_id is incorrect", ()=> {
-      transfer('abcdef1234', transfer_amount)
-    })
-
-    it("Alert please put accountId only number", ()=> {
-      cy.get(':nth-child(3) > label').should("have.text", "Please put accountId only number");
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id1", () => {
-      login_and_get_balance(account_id2, password_2, true)
-    })
-
-    it("Check old_balance_id2 = new_balance_id2", ()=> {
-      expect(old_balance_id2 == new_balance_id2).to.be.true
-    })
-
-  });
-
-  describe("TC23", () => {
-    
-    transfer_amount = 50
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("deposit", () => {
-      deposit(deposit_amount)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("transfer when account_id is incorrect", ()=> {
-      transfer('1312312121', transfer_amount)
-    })
-
-    it("Alert not found your target account Id", ()=> {
-      cy.get(':nth-child(3) > label').should("have.text", "Not found your target account Id");
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id2", () => {
-      login_and_get_balance(account_id2, password_2, true)
-    })
-
-    it("Check old_balance_id2 = new_balance_id2", ()=> {
-      expect(old_balance_id2 == new_balance_id2).to.be.true
-    })
-
-  });
-
-  describe("TC24", () => {
-    
-    transfer_amount = 50
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("deposit", () => {
-      deposit(deposit_amount)
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("visit site", () => {
-      visit_site()
-    })
-
-    it("login and get old balance id2", () => {
-      login_and_get_balance(account_id2, password_2, false)
-    })
-
-    it("transfer when account_id is incorrect", ()=> {
-      transfer(account_id2, transfer_amount)
-    })
-
-    it("Alert cannot transfer to your own id", ()=> {
-      cy.get(':nth-child(3) > label').should("have.text", "Cannot transfer to your own id");
-    })
-
-    it("logout", ()=> {
-      logout()
-    })
-
-    it("login and get new balance id2", () => {
-      login_and_get_balance(account_id2, password_2, true)
-    })
-
-    it("Check old_balance_id2 = new_balance_id2", ()=> {
-      expect(old_balance_id2 == new_balance_id2).to.be.true
-    })
-
-  });
-
-})
+});

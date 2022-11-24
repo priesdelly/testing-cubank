@@ -18,7 +18,7 @@ describe("withdrawal", () => {
     logIn();
     cy.wait("@loginSubmit").then((interception) => {
       expect(interception.response?.statusCode).eq(200);
-      cy.intercept('GET', 'https://cu-bank.herokuapp.com/api/v1/transactions').as('getTransaction')
+      cy.intercept('GET', 'https://cu-bank.herokuapp.com/api/v1/transactions').as('getTransaction');
       cy.wait('@getTransaction').then((interception2) => {
         expect(interception2.response?.statusCode).eq(200);
         let res = interception2.response?.body;
