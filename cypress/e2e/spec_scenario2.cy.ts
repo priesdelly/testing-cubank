@@ -16,7 +16,7 @@ const loginSuccess = () => {
 }
 
 describe('Scenario', () => {
-	it('TC2', () => {
+	it('scenario 1: TC2', () => {
 		cy.visit('https://cu-bank-fe.vercel.app/');
 		cy.get('[href="/register"]').click();
 		cy.get('#accountId').type('90000000011');
@@ -59,7 +59,7 @@ describe('Scenario', () => {
 		cy.get('label[cid="deposite-error-mes"]').contains('Please put only number').should('exist')
 	})
 
-	it('scenario 3: TC24, TC33, TC53, TC70', () => {
+	it('scenario 5: TC24, TC33, TC53, TC70', () => {
 		//TC24
 		cy.visit('https://cu-bank-fe.vercel.app/');
 		cy.get('#accountId').clear();
@@ -84,7 +84,7 @@ describe('Scenario', () => {
 				let balanceUpdate = res.data.balance;
 
 				//TC53
-				cy.get('article > :nth-child(6)').should('contain.text', balanceUpdate);
+				cy.get('article > :nth-child(6)').should('contain.text', balanceUpdate?.toString());
 				if (balanceUpdate > 0) {
 					cy.get(':nth-child(4) > :nth-child(2) > form > label > #among').type(JSON.stringify(balanceUpdate));
 					cy.intercept(
@@ -139,7 +139,6 @@ describe('Scenario', () => {
 				expect(interception2.response?.statusCode).eq(200);
 				let res = interception2.response?.body;
 				let balanceUpdate = res.data.balance;
-				cy.setCookie('old-balance', balanceUpdate.toString())
 
 				//TC55
 				cy.get('article > :nth-child(6)').should('contain.text', balanceUpdate);
@@ -178,6 +177,25 @@ describe('Scenario', () => {
 			});
 
 		});
+	})
+
+	it('scenario 9: TC24, TC35, TC35', () => {
+		//TC24
+		loginSuccess();
+
+		//TC35
+		cy.get('input[cid="d1"]').type(fixtures.num308)
+		cy.get('button[cid="dc"]').click();
+		cy.get(':nth-child(3) > :nth-child(2) > form > label > #among:invalid')
+			.invoke('prop', 'validationMessage')
+			.should('equal', 'Please fill out this field.');
+
+		//TC35
+		cy.get('input[cid="d1"]').type(fixtures.num308)
+		cy.get('button[cid="dc"]').click();
+		cy.get(':nth-child(3) > :nth-child(2) > form > label > #among:invalid')
+			.invoke('prop', 'validationMessage')
+			.should('equal', 'Please fill out this field.');
 	})
 
 })
