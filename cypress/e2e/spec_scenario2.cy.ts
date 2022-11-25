@@ -1,12 +1,15 @@
 import fixtures from '../fixtures/deposit.json';
 
+const accountId = '9000000008';
+const password = '1234';
+
 const loginSuccess = () => {
 	cy.visit('https://cubank.prieston-serv.com/');
 
 	cy.get('#accountId').clear();
 	cy.get('#password').clear();
-	cy.get('#accountId').type('9000000001');
-	cy.get('#password').type('1234');
+	cy.get('#accountId').type(accountId);
+	cy.get('#password').type(password);
 
 	cy.intercept('POST', 'https://cubank-api.prieston-serv.com/api/v1/auth/login').as('loginSuccess')
 	cy.get('button').click();
@@ -20,7 +23,7 @@ describe('Scenario', () => {
 		cy.visit('https://cu-bank-fe.vercel.app/');
 		cy.get('[href="/register"]').click();
 		cy.get('#accountId').type('90000000011');
-		cy.get('#password').type('1234');
+		cy.get('#password').type(password);
 		cy.get('#firstName').type('tonkao');
 		cy.get('#lastName').type('tonkao')
 		cy.get('button').click();
@@ -34,7 +37,7 @@ describe('Scenario', () => {
 		cy.get('#password').clear();
 
 		cy.get('#accountId').type('90000000011');
-		cy.get('#password').type('1234');
+		cy.get('#password').type(password);
 
 		cy.get('button').click();
 		cy.get('div > label')
@@ -64,8 +67,8 @@ describe('Scenario', () => {
 		cy.visit('https://cubank.prieston-serv.com/');
 		cy.get('#accountId').clear();
 		cy.get('#password').clear();
-		cy.get('#accountId').type('9000000001');
-		cy.get('#password').type('1234');
+		cy.get('#accountId').type(accountId);
+		cy.get('#password').type(password);
 
 		cy.intercept('POST', 'https://cubank-api.prieston-serv.com/api/v1/auth/login').as('loginSuccess')
 		cy.get('button').click();
@@ -121,8 +124,8 @@ describe('Scenario', () => {
 		cy.visit('https://cubank.prieston-serv.com/');
 		cy.get('#accountId').clear();
 		cy.get('#password').clear();
-		cy.get('#accountId').type('9000000001');
-		cy.get('#password').type('1234');
+		cy.get('#accountId').type(accountId);
+		cy.get('#password').type(password);
 
 		cy.intercept('POST', 'https://cubank-api.prieston-serv.com/api/v1/auth/login').as('loginSuccess')
 		cy.get('button').click();
@@ -180,23 +183,23 @@ describe('Scenario', () => {
 		});
 	})
 
-	it('scenario 9: TC24, TC35, TC35', () => {
-		//TC24
-		loginSuccess();
+	// it('scenario 9: TC24, TC35, TC35', () => {
+	// 	//TC24
+	// 	loginSuccess();
 
-		//TC35
-		cy.get('input[cid="d1"]').type(fixtures.num308)
-		cy.get('button[cid="dc"]').click();
-		cy.get(':nth-child(3) > :nth-child(2) > form > label > #among:invalid')
-			.invoke('prop', 'validationMessage')
-			.should('equal', 'Please fill out this field.');
+	// 	//TC35
+	// 	cy.get('input[cid="d1"]').type(fixtures.num308)
+	// 	cy.get('button[cid="dc"]').click();
+	// 	cy.get(':nth-child(3) > :nth-child(2) > form > label > #among:invalid')
+	// 		.invoke('prop', 'validationMessage')
+	// 		.should('equal', 'Please fill out this field.');
 
-		//TC35
-		cy.get('input[cid="d1"]').type(fixtures.num308)
-		cy.get('button[cid="dc"]').click();
-		cy.get(':nth-child(3) > :nth-child(2) > form > label > #among:invalid')
-			.invoke('prop', 'validationMessage')
-			.should('equal', 'Please fill out this field.');
-	})
+	// 	//TC35
+	// 	cy.get('input[cid="d1"]').type(fixtures.num308)
+	// 	cy.get('button[cid="dc"]').click();
+	// 	cy.get(':nth-child(3) > :nth-child(2) > form > label > #among:invalid')
+	// 		.invoke('prop', 'validationMessage')
+	// 		.should('equal', 'Please fill out this field.');
+	// })
 
 })
