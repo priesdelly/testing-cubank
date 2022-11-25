@@ -20,7 +20,7 @@ const loginSuccess = () => {
 
 describe('Scenario', () => {
 	it('scenario 1: TC2', () => {
-		cy.visit('https://cu-bank-fe.vercel.app/');
+		cy.visit('https://cubank.prieston-serv.com/');
 		cy.get('[href="/register"]').click();
 		cy.get('#accountId').type('90000000011');
 		cy.get('#password').type(password);
@@ -81,7 +81,7 @@ describe('Scenario', () => {
 				"getTransaction"
 			);
 			cy.get(':nth-child(3) > :nth-child(2) > form > button').click();
-			cy.wait("@getTransaction").then((interception2) => {
+			cy.wait("@getTransaction" , { timeout: 10000 }).then((interception2) => {
 				expect(interception2.response?.statusCode).eq(200);
 				let res = interception2.response?.body;
 				let balanceUpdate = res.data.balance;
@@ -108,7 +108,7 @@ describe('Scenario', () => {
 						// 	"https://cu-bank.herokuapp.com/api/v1/transactions"
 						// ).as("putTransaction2");
 						cy.get(':nth-child(5) > :nth-child(2) > form > button').click();
-						cy.get(':nth-child(3) > label').should('contain.text', "your balance isn't not enough")
+						cy.get('label[cid="transfer-error-mes"]').should('contain.text', "your balance is not enough")
 						// cy.wait("@putTransaction2").then((interception4) => {
 						// 	expect(interception4.response?.statusCode).eq(400);
 						// });
