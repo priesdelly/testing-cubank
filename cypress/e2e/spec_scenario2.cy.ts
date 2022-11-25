@@ -16,8 +16,8 @@ const loginSuccess = () => {
 }
 
 describe('Scenario', () => {
-	it('TC2', () => {
-		cy.visit('https://cubank.prieston-serv.com/');
+	it('scenario 1: TC2', () => {
+		cy.visit('https://cu-bank-fe.vercel.app/');
 		cy.get('[href="/register"]').click();
 		cy.get('#accountId').type('90000000011');
 		cy.get('#password').type('1234');
@@ -59,7 +59,7 @@ describe('Scenario', () => {
 		cy.get('label[cid="deposite-error-mes"]').contains('Please put only number').should('exist')
 	})
 
-	it('scenario 3: TC24, TC33, TC53, TC70', () => {
+	it('scenario 5: TC24, TC33, TC53, TC70', () => {
 		//TC24
 		cy.visit('https://cubank.prieston-serv.com/');
 		cy.get('#accountId').clear();
@@ -84,7 +84,7 @@ describe('Scenario', () => {
 				let balanceUpdate = res.data.balance;
 
 				//TC53
-				cy.get('article > :nth-child(6)').should('contain.text', balanceUpdate);
+				cy.get('article > :nth-child(6)').should('contain.text', balanceUpdate?.toString());
 				if (balanceUpdate > 0) {
 					cy.get(':nth-child(4) > :nth-child(2) > form > label > #among').type(JSON.stringify(balanceUpdate));
 					cy.intercept(
@@ -100,15 +100,15 @@ describe('Scenario', () => {
 						//TC70
 						cy.get('#accountId').type('1122334455');
 						cy.get(':nth-child(5) > :nth-child(2) > form > :nth-child(2) > label > #among').type('100');
-						cy.intercept(
-							"PUT",
-							"https://cubank-api.prieston-serv.com/api/v1/transactions"
-						).as("putTransaction2");
+						// cy.intercept(
+						// 	"PUT",
+						// 	"https://cu-bank.herokuapp.com/api/v1/transactions"
+						// ).as("putTransaction2");
 						cy.get(':nth-child(5) > :nth-child(2) > form > button').click();
-						cy.wait("@putTransaction2").then((interception4) => {
-							expect(interception4.response?.statusCode).eq(400);
-							cy.get(':nth-child(3) > label').should('contain.text', "your balance is not enough")
-						});
+						cy.get(':nth-child(3) > label').should('contain.text', "your balance isn't not enough")
+						// cy.wait("@putTransaction2").then((interception4) => {
+						// 	expect(interception4.response?.statusCode).eq(400);
+						// });
 					});
 				}
 			});
@@ -178,6 +178,25 @@ describe('Scenario', () => {
 			});
 
 		});
+	})
+
+	it('scenario 9: TC24, TC35, TC35', () => {
+		//TC24
+		loginSuccess();
+
+		//TC35
+		cy.get('input[cid="d1"]').type(fixtures.num308)
+		cy.get('button[cid="dc"]').click();
+		cy.get(':nth-child(3) > :nth-child(2) > form > label > #among:invalid')
+			.invoke('prop', 'validationMessage')
+			.should('equal', 'Please fill out this field.');
+
+		//TC35
+		cy.get('input[cid="d1"]').type(fixtures.num308)
+		cy.get('button[cid="dc"]').click();
+		cy.get(':nth-child(3) > :nth-child(2) > form > label > #among:invalid')
+			.invoke('prop', 'validationMessage')
+			.should('equal', 'Please fill out this field.');
 	})
 
 })
