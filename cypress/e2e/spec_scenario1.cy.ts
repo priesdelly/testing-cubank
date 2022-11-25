@@ -5,7 +5,7 @@ const firstName = faker.name.firstName();
 const lastName = faker.name.lastName();
 
 const register = () => {
-  cy.visit('https://cu-bank-fe.vercel.app/');
+  cy.visit('https://cubank.prieston-serv.com/');
     cy.get('[href="/register"]').click();
 
     cy.location('href').should('include', '/register');
@@ -16,23 +16,23 @@ const register = () => {
     cy.get('#lastName').type(lastName);
 
     cy.get('button').click();
-    cy.intercept('POST', 'https://cu-bank.herokuapp.com/api/v1/auth/register').as('register')
+    cy.intercept('POST', 'https://cubank-api.prieston-serv.com/api/v1/auth/register').as('register')
     cy.wait('@register').then((interception) => {
       if (interception.response.statusCode === 401 || interception.response.statusCode === 200) {
         return;
       }
     });
-    cy.visit('https://cu-bank-fe.vercel.app/');
+    cy.visit('https://cubank.prieston-serv.com/');
 }
 
 const login = () => {
   // cy.wait(3000)
-  cy.visit("https://cu-bank-fe.vercel.app/");
+  cy.visit("https://cubank.prieston-serv.com/");
   cy.get("#accountId").clear();
   cy.get("#password").clear();
   cy.get("#accountId").type("0000000000");
   cy.get("#password").type("0000");
-  cy.intercept("POST", "https://cu-bank.herokuapp.com/api/v1/auth/login").as(
+  cy.intercept("POST", "https://cubank-api.prieston-serv.com/api/v1/auth/login").as(
     "loginSubmit"
   );
   cy.get('[cid="lc"]').click();
@@ -40,7 +40,7 @@ const login = () => {
 
 const deposit = () => {
   cy.get('[cid="d1"]').type("100");
-  cy.intercept("PUT", "https://cu-bank.herokuapp.com/api/v1/transactions").as(
+  cy.intercept("PUT", "https://cubank-api.prieston-serv.com/api/v1/transactions").as(
     "putTransaction2"
   );
   cy.get('[cid="dc"]').click();
@@ -48,7 +48,7 @@ const deposit = () => {
 
 const withdraw = () => {
   cy.get('[cid="w1"]').type("200");
-  cy.intercept("PUT", "https://cu-bank.herokuapp.com/api/v1/transactions").as(
+  cy.intercept("PUT", "https://cubank-api.prieston-serv.com/api/v1/transactions").as(
     "putTransaction"
   );
   cy.get('[cid="wc"]').click();
@@ -65,7 +65,7 @@ const billpayment2 = () => {
     cy.get('[cid="b4"]').type("20");
     cy.intercept(
         "PUT",
-        "https://cu-bank.herokuapp.com/api/v1/transactions"
+        "https://cubank-api.prieston-serv.com/api/v1/transactions"
       ).as("putTransaction");
     cy.get('[cid="bc"]').click();
 }
@@ -74,7 +74,7 @@ const prepBalance = () => {
   login();
   cy.wait("@loginSubmit").then((interception) => {
     expect(interception.response?.statusCode).eq(200);
-    cy.intercept("GET", "https://cu-bank.herokuapp.com/api/v1/transactions").as(
+    cy.intercept("GET", "https://cubank-api.prieston-serv.com/api/v1/transactions").as(
       "getTransaction"
     );
     cy.wait("@getTransaction").then((interception2) => {
@@ -85,7 +85,7 @@ const prepBalance = () => {
         cy.get('[cid="w1"]').type(JSON.stringify(balanceUpdate));
         cy.intercept(
           "PUT",
-          "https://cu-bank.herokuapp.com/api/v1/transactions"
+          "https://cubank-api.prieston-serv.com/api/v1/transactions"
         ).as("putTransaction");
         cy.get('[cid="wc"]').click();
         cy.wait("@putTransaction").then((interception3) => {
