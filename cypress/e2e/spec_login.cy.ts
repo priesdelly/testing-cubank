@@ -2,7 +2,7 @@ describe('Test login scenario', () => {
 
   it('TC1 - Success', () => {
 
-    cy.visit('https://cu-bank-fe.vercel.app/');
+    cy.visit('https://cubank.prieston-serv.com/');
     cy.get('[href="/register"]').click();
 
     cy.location('href').should('include', '/register');
@@ -13,20 +13,20 @@ describe('Test login scenario', () => {
     cy.get('#lastName').type('lastname');
 
     cy.get('button').click();
-    cy.intercept('POST', 'https://cu-bank.herokuapp.com/api/v1/auth/register').as('register')
+    cy.intercept('POST', 'https://cubank-api.prieston-serv.com/api/v1/auth/register').as('register')
     cy.wait('@register').then((interception) => {
       if (interception.response.statusCode === 401 || interception.response.statusCode === 200) {
         return;
       }
     });
-    cy.visit('https://cu-bank-fe.vercel.app/');
+    cy.visit('https://cubank.prieston-serv.com/');
 
     cy.get('#accountId').clear();
     cy.get('#password').clear();
     cy.get('#accountId').type('9000000001');
     cy.get('#password').type('1234');
 
-    cy.intercept('POST', 'https://cu-bank.herokuapp.com/api/v1/auth/login').as('loginSuccess')
+    cy.intercept('POST', 'https://cubank-api.prieston-serv.com/api/v1/auth/login').as('loginSuccess')
     cy.get('button').click();
     cy.wait('@loginSuccess').then((interception) => {
       expect(interception.response?.statusCode).eq(200);
@@ -35,7 +35,7 @@ describe('Test login scenario', () => {
   });
 
   it('TC2 - Fail case when use account id more than 10 digits', () => {
-    cy.visit('https://cu-bank-fe.vercel.app/');
+    cy.visit('https://cubank.prieston-serv.com/');
 
     cy.get('#accountId').clear();
     cy.get('#password').clear();
@@ -50,7 +50,7 @@ describe('Test login scenario', () => {
   });
 
   it('TC3 - Fail case when use account id less than 10 digits', () => {
-    cy.visit('https://cu-bank-fe.vercel.app/');
+    cy.visit('https://cubank.prieston-serv.com/');
 
     cy.get('#accountId').clear();
     cy.get('#password').clear();
@@ -65,7 +65,7 @@ describe('Test login scenario', () => {
   });
 
   it('TC4 - Fail case when fill not input account id only number', () => {
-    cy.visit('https://cu-bank-fe.vercel.app/');
+    cy.visit('https://cubank.prieston-serv.com/');
 
     cy.get('#accountId').clear();
     cy.get('#password').clear();
@@ -80,7 +80,7 @@ describe('Test login scenario', () => {
   });
 
   it('TC5 - Fail user not found', () => {
-    cy.visit('https://cu-bank-fe.vercel.app/');
+    cy.visit('https://cubank.prieston-serv.com/');
 
     cy.get('#accountId').clear();
     cy.get('#password').clear();
@@ -95,7 +95,7 @@ describe('Test login scenario', () => {
   });
 
   it('TC6 - Fail fill password more than 4 digits', () => {
-    cy.visit('https://cu-bank-fe.vercel.app/');
+    cy.visit('https://cubank.prieston-serv.com/');
 
     cy.get('#accountId').clear();
     cy.get('#password').clear();
@@ -110,7 +110,7 @@ describe('Test login scenario', () => {
   });
 
   it('TC7 - Fail fill password less than 4 digits', () => {
-    cy.visit('https://cu-bank-fe.vercel.app/');
+    cy.visit('https://cubank.prieston-serv.com/');
 
     cy.get('#accountId').clear();
     cy.get('#password').clear();
@@ -125,7 +125,7 @@ describe('Test login scenario', () => {
   });
 
   it('TC8 - Fail fill password with alphabet', () => {
-    cy.visit('https://cu-bank-fe.vercel.app/');
+    cy.visit('https://cubank.prieston-serv.com/');
 
     cy.get('#accountId').clear();
     cy.get('#password').clear();
@@ -140,7 +140,7 @@ describe('Test login scenario', () => {
   });
 
   it('TC9 - Fail fill password wrong password', () => {
-    cy.visit('https://cu-bank-fe.vercel.app/');
+    cy.visit('https://cubank.prieston-serv.com/');
 
     cy.get('#accountId').clear();
     cy.get('#password').clear();
