@@ -1,14 +1,14 @@
 import fixtures from '../fixtures/deposit.json';
 
 const doLogin = () => {
-  cy.visit('https://cu-bank-fe.vercel.app');
+  cy.visit('https://cubank.prieston-serv.com');
 
   cy.get('#accountId').clear();
   cy.get('#password').clear();
   cy.get('#accountId').type(fixtures.username);
   cy.get('#password').type(fixtures.password);
 
-  cy.intercept('POST', 'https://cu-bank.herokuapp.com/api/v1/auth/login').as('loginSuccess')
+  cy.intercept('POST', 'https://cubank-api.prieston-serv.com/api/v1/auth/login').as('loginSuccess')
 
   cy.get('button').click();
   cy.wait('@loginSuccess').then((interception) => {
@@ -22,7 +22,7 @@ describe('Deposit scenario', () => {
 
     doLogin();
 
-    cy.intercept('GET', 'https://cu-bank.herokuapp.com/api/v1/transactions').as('getTransaction')
+    cy.intercept('GET', 'https://cubank-api.prieston-serv.com/api/v1/transactions').as('getTransaction')
     cy.wait('@getTransaction').then((interception) => {
       expect(interception.response?.statusCode).eq(200);
       const body = interception.response?.body;
@@ -31,7 +31,7 @@ describe('Deposit scenario', () => {
 
     cy.get('input[cid="d1"]').type('100')
 
-    cy.intercept('PUT', 'https://cu-bank.herokuapp.com/api/v1/transactions').as('putTransaction')
+    cy.intercept('PUT', 'https://cubank-api.prieston-serv.com/api/v1/transactions').as('putTransaction')
     cy.get('button[cid="dc"]').click();
     cy.wait('@putTransaction').then((interception2) => {
       expect(interception2.response?.statusCode).eq(200);
@@ -64,7 +64,7 @@ describe('Deposit scenario', () => {
 
     cy.get('input[cid="d1"]').type(fixtures.num308);
 
-    cy.intercept('PUT', 'https://cu-bank.herokuapp.com/api/v1/transactions').as('putTransaction')
+    cy.intercept('PUT', 'https://cubank-api.prieston-serv.com/api/v1/transactions').as('putTransaction')
     cy.get('button[cid="dc"]').click();
     cy.get('input[cid="d1"]').then($el => $el[0].checkValidity()).should('be.true');
 
@@ -81,7 +81,7 @@ describe('Deposit scenario', () => {
 
     cy.get('input[cid="d1"]').type(fixtures.num307);
 
-    cy.intercept('PUT', 'https://cu-bank.herokuapp.com/api/v1/transactions').as('putTransaction')
+    cy.intercept('PUT', 'https://cubank-api.prieston-serv.com/api/v1/transactions').as('putTransaction')
     cy.get('button[cid="dc"]').click();
     cy.get('input[cid="d1"]').then($el => $el[0].checkValidity()).should('be.true')
 
@@ -98,7 +98,7 @@ describe('Deposit scenario', () => {
 
     cy.get('input[cid="d1"]').type('2')
 
-    cy.intercept('PUT', 'https://cu-bank.herokuapp.com/api/v1/transactions').as('putTransaction')
+    cy.intercept('PUT', 'https://cubank-api.prieston-serv.com/api/v1/transactions').as('putTransaction')
     cy.get('button[cid="dc"]').click();
     cy.get('input[cid="d1"]').then($el => $el[0].checkValidity()).should('be.true')
 
@@ -114,7 +114,7 @@ describe('Deposit scenario', () => {
     doLogin();
 
     cy.get('input[cid="d1"]').type('1')
-    cy.intercept('PUT', 'https://cu-bank.herokuapp.com/api/v1/transactions').as('putTransaction')
+    cy.intercept('PUT', 'https://cubank-api.prieston-serv.com/api/v1/transactions').as('putTransaction')
     cy.get('button[cid="dc"]').click();
     cy.get('input[cid="d1"]').then($el => $el[0].checkValidity()).should('be.true')
 
@@ -139,7 +139,7 @@ describe('Deposit scenario', () => {
     doLogin();
 
     cy.get('input[cid="d1"]').type('1.0')
-    cy.intercept('PUT', 'https://cu-bank.herokuapp.com/api/v1/transactions').as('putTransaction')
+    cy.intercept('PUT', 'https://cubank-api.prieston-serv.com/api/v1/transactions').as('putTransaction')
     cy.get('button[cid="dc"]').click();
     cy.get('input[cid="d1"]').then($el => $el[0].checkValidity()).should('be.true')
 
@@ -173,7 +173,7 @@ describe('Deposit scenario', () => {
     doLogin();
 
     cy.get('input[cid="d1"]').type('1.0000000596')
-    cy.intercept('PUT', 'https://cu-bank.herokuapp.com/api/v1/transactions').as('putTransaction')
+    cy.intercept('PUT', 'https://cubank-api.prieston-serv.com/api/v1/transactions').as('putTransaction')
     cy.get('button[cid="dc"]').click();
     cy.get('input[cid="d1"]').then($el => $el[0].checkValidity()).should('be.true')
 
@@ -184,48 +184,48 @@ describe('Deposit scenario', () => {
     });
   });
 
-  it('TC12 - success input number amount = +1', () => {
+  // it('TC12 - success input number amount = +1', () => {
 
-    doLogin();
+  //   doLogin();
 
-    cy.get('input[cid="d1"]').type(+1)
-    cy.intercept('PUT', 'https://cu-bank.herokuapp.com/api/v1/transactions').as('putTransaction')
-    cy.get('button[cid="dc"]').click();
-    cy.get('input[cid="d1"]').then($el => $el[0].checkValidity()).should('be.true')
+  //   cy.get('input[cid="d1"]').type(+1)
+  //   cy.intercept('PUT', 'https://cubank-api.prieston-serv.com/api/v1/transactions').as('putTransaction')
+  //   cy.get('button[cid="dc"]').click();
+  //   cy.get('input[cid="d1"]').then($el => $el[0].checkValidity()).should('be.true')
 
-    cy.wait('@putTransaction').then((interception) => {
-      expect(interception.response?.statusCode).eq(200);
-      cy.get('input[cid="w1"]').type(+1);
-      cy.get('button[cid="wc"]').click();
-    });
-  });
+  //   cy.wait('@putTransaction').then((interception) => {
+  //     expect(interception.response?.statusCode).eq(200);
+  //     cy.get('input[cid="w1"]').type(+1);
+  //     cy.get('button[cid="wc"]').click();
+  //   });
+  // });
 
-  it('TC13 - fail input number amount = -1', () => {
+  // it('TC13 - fail input number amount = -1', () => {
 
-    doLogin();
+  //   doLogin();
 
-    cy.get('input[cid="d1"]').type(-1)
-    cy.get('button[cid="dc"]').click();
-    cy.get('label[cid="deposite-error-mes"]').contains('Please put only number').should('exist')
-  });
+  //   cy.get('input[cid="d1"]').type(-1)
+  //   cy.get('button[cid="dc"]').click();
+  //   cy.get('label[cid="deposite-error-mes"]').contains('Please put only number').should('exist')
+  // });
 
-  it('TC14 - fail input number amount = ++1', () => {
+  // it('TC14 - fail input number amount = ++1', () => {
 
-    doLogin();
+  //   doLogin();
 
-    cy.get('input[cid="d1"]').type('++1')
-    cy.get('button[cid="dc"]').click();
-    cy.get('input[cid="d1"]').then($el => $el[0].checkValidity()).should('be.false')
-  });
+  //   cy.get('input[cid="d1"]').type('++1')
+  //   cy.get('button[cid="dc"]').click();
+  //   cy.get('input[cid="d1"]').then($el => $el[0].checkValidity()).should('be.false')
+  // });
 
-  it('TC15 - fail input number amount = +1+', () => {
+  // it('TC15 - fail input number amount = +1+', () => {
 
-    doLogin();
+  //   doLogin();
 
-    cy.get('input[cid="d1"]').type('+1+');
-    cy.get('button[cid="dc"]').click();
-    cy.get('input[cid="d1"]').then($el => $el[0].checkValidity()).should('be.false')
-  });
+  //   cy.get('input[cid="d1"]').type('+1+');
+  //   cy.get('button[cid="dc"]').click();
+  //   cy.get('input[cid="d1"]').then($el => $el[0].checkValidity()).should('be.false')
+  // });
 
   //TODO
   // it('TC16 - fail input number amount = 1++', () => {
@@ -253,7 +253,7 @@ describe('Deposit scenario', () => {
     doLogin();
 
     cy.get('input[cid="d1"]').type('1e99')
-    cy.intercept('PUT', 'https://cu-bank.herokuapp.com/api/v1/transactions').as('putTransaction')
+    cy.intercept('PUT', 'https://cubank-api.prieston-serv.com/api/v1/transactions').as('putTransaction')
     cy.get('button[cid="dc"]').click();
     cy.get('input[cid="d1"]').then($el => $el[0].checkValidity()).should('be.true')
 
@@ -269,7 +269,7 @@ describe('Deposit scenario', () => {
     doLogin();
 
     cy.get('input[cid="d1"]').type('1e9')
-    cy.intercept('PUT', 'https://cu-bank.herokuapp.com/api/v1/transactions').as('putTransaction')
+    cy.intercept('PUT', 'https://cubank-api.prieston-serv.com/api/v1/transactions').as('putTransaction')
     cy.get('button[cid="dc"]').click();
     cy.get('input[cid="d1"]').then($el => $el[0].checkValidity()).should('be.true')
 
