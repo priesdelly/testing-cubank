@@ -136,6 +136,10 @@ const prepBalance = () => {
   });
 };
 
+const logout = () => {
+  cy.visit("https://cubank.prieston-serv.com/");
+}
+
 describe("scenario", () => {
   it("scenario 4: TC24, TC33, TC52", () => {
     prepBalance();
@@ -203,6 +207,8 @@ describe("scenario", () => {
     cy.wait("@putTransaction").then((interception) => {
       expect(interception.response?.statusCode).eq(200);
     });
+
+    logout();
   });
 
   it("scenario 9: TC24, TC35, TC35", () => {
@@ -229,6 +235,7 @@ describe("scenario", () => {
       console.log(res);
       expect(res).eq(null);
     });
+    logout();
   });
 
   it("scenario 10: TC24, TC50", () => {
