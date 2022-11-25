@@ -40,7 +40,7 @@ const login = () => {
 
 const login2 = () => {
   // cy.wait(3000)
-  cy.visit("https://cu-bank-fe.vercel.app/");
+  cy.visit("https://cubank.prieston-serv.com/");
   cy.get("#accountId").clear();
   cy.get("#password").clear();
   cy.get("#accountId").type(username);
