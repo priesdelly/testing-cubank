@@ -13,6 +13,10 @@ const logIn = () => {
   cy.get('[cid="lc"]').click();
 };
 
+const logout = () => {
+  cy.visit("https://cubank.prieston-serv.com/");
+}
+
 describe("withdrawal", () => {
   let balance;
 
@@ -43,6 +47,7 @@ describe("withdrawal", () => {
         });
       });
     });
+    logout();
   });
 
   //TC1 Amount max+ expected your balance isn't not enough
@@ -66,6 +71,7 @@ describe("withdrawal", () => {
     cy.get('[cid="billpayment-error-mes"]')
       .contains("your balance isn't not enough")
       .should("exist");
+      logout();
   });
 
   //------------
@@ -109,6 +115,7 @@ describe("withdrawal", () => {
     cy.wait('@putTransaction').then((interception4) => {
       expect(interception4.response?.statusCode).eq(200);
     });
+    logout();
   });
 
   //------------
@@ -151,6 +158,7 @@ describe("withdrawal", () => {
     cy.wait('@putTransaction').then((interception) => {
       expect(interception.response?.statusCode).eq(200);
     });
+    logout();
   });
 
   //------------
@@ -182,7 +190,7 @@ describe("withdrawal", () => {
       console.log(balance_update);
       expect(balance_update).eq(balance - 50);
     });
-
+    logout();
   });
 
   //------------
@@ -214,6 +222,7 @@ describe("withdrawal", () => {
       console.log(balance_update);
       expect(balance_update).eq(balance - 2);
     });
+    logout();
   });
 
   //------------
@@ -245,6 +254,7 @@ describe("withdrawal", () => {
       console.log(balance_update);
       expect(balance_update).eq(balance - 1);
     });
+    logout();
   });
 
   //------------
@@ -264,6 +274,7 @@ describe("withdrawal", () => {
     cy.get('[cid="billpayment-error-mes"]')
       .contains("Please put only number")
       .should("exist");
+      logout();
   });
 
   //------------
@@ -292,6 +303,7 @@ describe("withdrawal", () => {
     cy.wait("@tc8Submit").then((interception) => {
       expect(interception.response.statusCode).eq(200);
     });
+    logout();
   });
 
   //------------
@@ -316,6 +328,7 @@ describe("withdrawal", () => {
     cy.get('input[cid="b4"]')
       .then(($el) => $el[0].checkValidity())
       .should("be.false");
+      logout();
   });
 
   //------------
@@ -340,6 +353,7 @@ describe("withdrawal", () => {
     cy.get('input[cid="b4"]')
       .then(($el) => $el[0].checkValidity())
       .should("be.false");
+      logout();
   });
 
   //------------
@@ -368,6 +382,7 @@ describe("withdrawal", () => {
     cy.wait("@tc11Submit").then((interception) => {
       expect(interception.response.statusCode).eq(200);
     });
+    logout();
   });
 
   //------------
